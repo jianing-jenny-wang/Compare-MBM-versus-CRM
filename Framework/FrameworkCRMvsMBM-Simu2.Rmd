@@ -2,7 +2,7 @@
 title: "Thesis1-TwoSampleCRMvsMBM Framework-Simu2"
 author: "Jianing Wang"
 date: "11/15/2021"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
