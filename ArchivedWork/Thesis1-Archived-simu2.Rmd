@@ -1,0 +1,207 @@
+---
+title: "Thesis1-ArchivedWork"
+author: "Jianing Wang"
+date: "12/28/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+## Scenario 1.2: Independent but different p
+
+p1 vector takes 0.1 ~ 0.3, p2 vector takes 0.5 ~ 0.8
+Fix p and do simulation nsim times
+
+Results
+```{r}
+# Scenario CRM vs MBM 1.1
+p1.vec <- seq(0.1, 0.3, by = 0.1)
+p2.vec <- seq(0.5, 0.8, by = 0.1)
+scenarios <- expand.grid(p2 = p2.vec, p1 = p1.vec)
+scenarios <- scenarios[, c("p1","p2")]
+
+# A single sub scenario
+crm.mbm.1.2 <- function(simsize = nsim, pplsize = targetN, p1 = scenarios[1,1], p2 = scenarios[1,2]){
+  # Create a list with length = number of scenarios = length(p1.vec)
+  # Element:
+  sample1.dt <- matrix(0, nrow = simsize, ncol = pplsize)
+  sample2.dt <- matrix(0, nrow = simsize, ncol = pplsize)
+  # Simulate for each element
+  for (i in 1:simsize){
+    set.seed(1234+i)
+  # Draw individuals for source 1, equivalent to labeling the individual
+  sample1.dt[i,] <- rbinom(pplsize, 1, p1)
+  # Draw individuals for source 2, equivalent to labeling the individual
+  sample2.dt[i,] <- rbinom(pplsize, 1, p2)
+  }
+  # Marginal counts for sources
+  n1 <- apply(sample1.dt,1,sum)
+  n2 <- apply(sample2.dt,1,sum)
+  # Overlapping individuals, equivalent to labeling the overlapping
+  sample1.2.dt<-sample1.dt*sample2.dt
+  # Counts of overlapping
+  n11 <- apply(sample1.2.dt,1,sum)
+  # --- Compute by Estimators --- #
+  # LP Estimator for CRM
+  # Est Total N for CRM
+  Nhat <- n1*n2/n11
+  # Summary
+  MSE.Nhat_LP <- mean((Nhat-pplsize)^2)
+  Mean.Nhat_LP <- mean(Nhat)
+  SD.Nhat_LP <- sd(Nhat)
+  LB95.Nhat_LP <- mean(Nhat) - 1.96*sd(Nhat)
+  UB95.Nhat_LP <- mean(Nhat) + 1.96*sd(Nhat)
+  # Estimator for MBM
+  # Sample 1 to generate multiplier, Sample 2 as benchmark
+  p_m <- n11/n1
+  hidden_n_MBM <- NULL
+  Nhat_MBM <- NULL
+  for(i in 1:simsize){
+  set.seed(1234+i)
+  # Get unobserved n
+  hidden_n_MBM <- rnbinom(1, size = n2[i], prob = p_m[i])
+  # Get total N
+  Temp_Nhat_MBM <- hidden_n_MBM + n2[i]
+  # Est Total N for MBM
+  Nhat_MBM <- c(Nhat_MBM,Temp_Nhat_MBM)
+  }
+  # Summary
+  MSE.Nhat_MBM <- mean((Nhat_MBM-pplsize)^2)
+  Mean.Nhat_MBM <- mean(Nhat_MBM)
+  SD.Nhat_MBM <- sd(Nhat_MBM)
+  LB95.Nhat_MBM <- mean(Nhat_MBM) - 1.96*sd(Nhat_MBM)
+  UB95.Nhat_MBM <- mean(Nhat_MBM) + 1.96*sd(Nhat_MBM)
+  # Combine output
+  df <- data.frame(MSE.Nhat_LP, Mean.Nhat_LP, SD.Nhat_LP, LB95.Nhat_LP, UB95.Nhat_LP, 
+                   MSE.Nhat_MBM, Mean.Nhat_MBM, SD.Nhat_MBM, LB95.Nhat_MBM, UB95.Nhat_MBM)
+  return(df)
+}
+# Changing p vector from both low to both high
+crm.mbm.1.2.ls <- function(simsize = nsim, pplsize = targetN, p1 = scenarios[,1], p2 = scenarios[,2]){
+  # Start changing scenarios across the vector of pre-specified p
+  # Create list, each element is one sub-scenario of p1 and p2
+  s1.2.ls <- list()
+  # Put in list (Dim = length(p.vex) with each element has dim = simsize * pplsize)
+  if(length(p1) == length(p2)) {length.ls <- length(p1)}
+  for(l in 1:length.ls){
+    s1.2.ls[[l]] <-  crm.mbm.1.2(simsize = simsize, pplsize = pplsize, p1 = p1[l], p2 = p2[l])
+  }
+  # Collapse the list
+  s1.2.comb <- do.call(rbind,s1.2.ls)
+  # Add scenarios
+  scenario <- data.frame(p1, p2)
+  # Final output
+  final.s1.2.comb <- as.data.frame(cbind(scenario,s1.2.comb))
+  return(final.s1.2.comb)
+}
+# Run simulation, get summary statistics
+crm.mbm.1.2.Nhat <- crm.mbm.1.2.ls(simsize = nsim, pplsize = targetN, p1 = scenarios$p1, p2 = scenarios$p2)
+write.csv(crm.mbm.1.2.Nhat, file = "Simu_Output/CRMvsMBM/final.crm.mbm.1.2.Nhat.csv", row.names = FALSE)
+```
+
+
+
+# Stan Model
+
+Prepare data
+Run Stan Model
+```{r}
+library(rstan)
+library(loo)
+rstan_options("javascript" = FALSE)
+
+# Prepare data
+# Scenario CRM vs MBM 1.1
+p1.vec <- seq(0.1, 0.5, by = 0.2)
+p2.vec <- seq(0.2, 0.6, by = 0.2)
+scenarios1 <- expand.grid(p2 = p2.vec, p1 = p1.vec)
+scenarios1 <- scenarios1[, c("p1","p2")]
+
+get.single.s1 <- function(simsize = nsim, pplsize = targetN, p1 = scenarios1$p1[1], p2 = scenarios1$p2[1]){
+  # Create a list with length = number of scenarios = length(p1.vec)
+  # Element:
+  sample1.dt <- matrix(0, nrow = simsize, ncol = pplsize)
+  sample2.dt <- matrix(0, nrow = simsize, ncol = pplsize)
+  # Simulate for each element
+  for (i in 1:simsize){
+    set.seed(1234+i)
+  # Draw individuals for source 1, equivalent to labeling the individual
+  sample1.dt[i,] <- rbinom(pplsize, 1, p1)
+  # Draw individuals for source 2, equivalent to labeling the individual
+  sample2.dt[i,] <- rbinom(pplsize, 1, p2)
+  }
+  # Marginal counts for sources
+  n1 <- apply(sample1.dt,1,sum)
+  n2 <- apply(sample2.dt,1,sum)
+  # Overlapping individuals, equivalent to labeling the overlapping
+  sample1.2.dt<-sample1.dt*sample2.dt
+  # Counts of overlapping
+  n11 <- apply(sample1.2.dt,1,sum)
+  
+  df <- data.frame(n1,n2,n11)
+  return(df)
+}
+# Changing p vector from both low to both high
+get.dt.s1 <- function(simsize = nsim, pplsize = targetN, p1 = scenarios1$p1, p2 = scenarios1$p2){
+  # Start changing scenarios across the vector of pre-specified p
+  # Create list, each element is one sub-scenario of p1 and p2
+  s1.ls <- list()
+  # Put in list (Dim = length(p.vex) with each element has dim = simsize * pplsize)
+  if(length(p1) == length(p2)) {length.ls <- length(p1)}
+  for(l in 1:length.ls){
+    s1.ls[[l]] <-  get.single.s1(simsize = simsize, pplsize = pplsize, p1 = p1[l], p2 = p2[l])
+  }
+  # Collapse the list
+  s1.comb <- do.call(rbind,s1.ls)
+  # Add scenarios
+  scenario <- data.frame(p1, p2)
+  # Final output
+  final.s1.comb<- as.data.frame(cbind(scenario,s1.comb))
+  return(final.s1.comb)
+}
+
+dt.s1 <- get.dt.s1(simsize = nsim, pplsize = targetN, p1 = scenarios1$p1, p2 = scenarios1$p2)
+
+# Specify how the MCMC would be for stan()
+warmups <- 10000
+total_iter <- 15000
+max_treedepth <- 10
+adapt_delta <- 0.80
+chains <- 4
+n.cores <- 4
+step_refresh <- total_iter/10
+n.thin <- 10 # Just due to consistent with other models on # of samples
+
+# Pass data to model
+MBM_mod1 <- list(dt_length = nrow(dt.s1),
+                 n1 = dt.s1$n1,
+                 n2 = dt.s1$n2,
+                 m = dt.s1$n11,
+                 alpha_2 = 1,
+                 beta_2 = 1,
+                 alpha_m = 1,
+                 beta_m = 1,
+                 sigma_ep = 10)
+
+### Compute posterior samples ###
+# # Directly compute posterior samples via stan()
+fit.MBM.mod1 <- stan(file = "StanMod/Stan_MBM.stan",
+                    data = MBM_mod1,
+                    chains = chains,
+                    warmup = warmups,
+                    iter = total_iter,
+                    cores = n.cores,
+                    refresh = step_refresh,
+                    control = list(adapt_delta = adapt_delta,
+                                   max_treedepth = max_treedepth),
+                    thin = n.thin
+)
+```
+Note: Chain 4:   Error evaluating the log probability at the initial value.
+Chain 4: Exception: binomial_lpmf: Probability parameter is nan, but must be finite!  (in 'model409b1164091a_Stan_MBM' at line 60)
+
+```
