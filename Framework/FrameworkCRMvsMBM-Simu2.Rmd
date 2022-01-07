@@ -60,7 +60,7 @@ scenarios1 <- scenarios1[, c("p1","p2")]
 source("Simu2.Scenarios.Functions.R")
 # Run simulation, get summary statistics for CRM process
 simu2.crm.1.Nhat <- crm.1.ls(simsize = nsim, pplsize = targetN, p1 = scenarios1$p1, p2 = scenarios1$p2)
-write.csv(simu2.crm.1.Nhat, file = "Outputs/ResultTb/simu2.crm.1.Nhat.csv", row.names = FALSE)
+write.csv(simu2.crm.1.Nhat, file = "/Users/jianingwang/Documents/Boston U PhD/___My Dissertation___/Work2_IndirectEst/_ThesisWork1-TwoSampleMBMvsCRM/Work1-Simulation/Simulation Framework/Outputs/ResultTb/simu2.crm.1.Nhat.csv", row.names = FALSE)
 ```
 
 ```{r}
@@ -72,8 +72,9 @@ scenarios1 <- scenarios1[, c("pB","p2")]
 # Function to simulate CRM process
 source("Simu2.Scenarios.Functions.R")
 # Run simulation, get summary statistics for CRM process
-simu2.mbm.1.Nhat <- mbm.1.ls(sim.B = 15, simsize = nsim, pplsize = targetN, pB = scenarios1$pB, p2 = scenarios1$p2)
-write.csv(simu2.mbm.1.Nhat, file = "Outputs/ResultTb/simu2.mbm.1.Nhat.csv", row.names = FALSE)
+simu2.mbm.1.Nhat <- mbm.1.ls(simsize = nsim, pplsize = targetN, pB = scenarios1$pB, p2 = scenarios1$p2)
+# Save the output
+write.csv(simu2.mbm.1.Nhat, file = "/Users/jianingwang/Documents/Boston U PhD/___My Dissertation___/Work2_IndirectEst/_ThesisWork1-TwoSampleMBMvsCRM/Work1-Simulation/Simulation Framework/Outputs/ResultTb/simu2.mbm.1.Nhat.csv", row.names = FALSE)
 ```
 
 Plots for each value of p1 (pB), compare the relative bias with LB95/UB95 areas between the framework of CRM and MBM
@@ -103,3 +104,35 @@ simu2.plot.CRM.MBM.diff.p_m(dt.crm = simu2.crm.1.Nhat, dt.mbm = simu2.mbm.1.Nhat
 simu2.plot.CRM.MBM.diff.p_m(dt.crm = simu2.crm.1.Nhat, dt.mbm = simu2.mbm.1.Nhat, p1_pB = p1.vec[3])
 simu2.plot.CRM.MBM.diff.p_m(dt.crm = simu2.crm.1.Nhat, dt.mbm = simu2.mbm.1.Nhat, p1_pB = p1.vec[4])
 ```
+
+??? Why it cannot give me the same answer??
+```{r}
+simu2.mbm.1.Nhat <- read.csv("/Users/jianingwang/Documents/Boston U PhD/___My Dissertation___/Work2_IndirectEst/_ThesisWork1-TwoSampleMBMvsCRM/Work1-Simulation/Simulation Framework/Outputs/ResultTb/GoldStandard/simu2.mbm.1.Nhat.csv")
+source("Simu2.Scenarios.Functions.R")
+simu2.plot.CRM.MBM.diff.p_m(dt.crm = simu2.crm.1.Nhat, dt.mbm = simu2.mbm.1.Nhat, p1_pB = p1.vec[1])
+simu2.plot.CRM.MBM.diff.p_m(dt.crm = simu2.crm.1.Nhat, dt.mbm = simu2.mbm.1.Nhat, p1_pB = p1.vec[2])
+simu2.plot.CRM.MBM.diff.p_m(dt.crm = simu2.crm.1.Nhat, dt.mbm = simu2.mbm.1.Nhat, p1_pB = p1.vec[3])
+simu2.plot.CRM.MBM.diff.p_m(dt.crm = simu2.crm.1.Nhat, dt.mbm = simu2.mbm.1.Nhat, p1_pB = p1.vec[4])
+
+```
+
+
+
+
+We also wonder if the coverage of the sample 1 and sample 2 has an impact. From the current plot we can see that the bias is higher in the case with sample 1 (benchmark) being low coverage than being higher coverage. The bias is also higher when p2 is small.
+
+We compare if the relative coverage has an impact too. So we first compute the relative coverage by dividing the p1(pB) by p2.
+
+```{r}
+simu2.crm.1.Nhat$rel.p1.to.p2 <- round(simu2.crm.1.Nhat$p1/simu2.crm.1.Nhat$p2,digits = 3)
+simu2.mbm.1.Nhat$rel.pB.to.p2 <- round(simu2.mbm.1.Nhat$pB/simu2.mbm.1.Nhat$p2,digits = 3)
+```
+
+Plot
+```{r}
+source("Simu2.Scenarios.Functions.R")
+simu2.plot.CRM.MBM.p1.to.p2(dt.crm = simu2.crm.1.Nhat, dt.mbm = simu2.mbm.1.Nhat)
+```
+
+This plot shows that when one source has much larger coverage than another, the estimators perform well. When two sources have similar coverage but both low coverage, then the estimators perform bad. LP is more biased, followed by two MBM estimator. The Chapman estimator always performs well.
+

@@ -1,5 +1,6 @@
 # Simulation 2 - Discuss the difference on proposed framework of CRM vs MBM
 library(dplyr)
+library(ggplot2)
 
 # For MBM - Negative binomial
 # Key points: Benchmark population is not a random sample, second sample is a random sample
@@ -138,7 +139,7 @@ crm.1.ls <- function(simsize = nsim, pplsize = targetN, p1 = scenarios1$p1 , p2 
 #########################################
 
 # A single sub scenario
-mbm.1 <- function(sim.B = n.fix.B, simsize = nsim, pplsize = targetN, pB =scenarios1$pB[12], p2 = scenarios1$p2[12]){
+mbm.1 <- function(simsize = nsim, pplsize = targetN, pB =scenarios1$pB[12], p2 = scenarios1$p2[12]){
   # Create a list with length = number of scenarios = length(p1.vec)
   # Element:
   # all.benchmart.dt <- matrix(0, nrow = sim.B, ncol = pplsize)
@@ -152,6 +153,7 @@ mbm.1 <- function(sim.B = n.fix.B, simsize = nsim, pplsize = targetN, pB =scenar
   # set.seed(2345+j)
   # all.benchmart.dt[j,] <- rbinom(pplsize, 1, pB)
   # benchmark.vec <- all.benchmart.dt[j,]
+  # set.seed(1234)
   benchmark.vec <- rbinom(pplsize, 1, pB)
   benchmark.dt <- t(replicate(simsize, benchmark.vec))
   # Simulate for each element
@@ -189,7 +191,6 @@ mbm.1 <- function(sim.B = n.fix.B, simsize = nsim, pplsize = targetN, pB =scenar
   # # Mean_Nhat_MBM_nb_mle_j <- mean(Nhat_MBM_nb_mle_j)
   # Nhat_MBM_nb_mle <- c(Nhat_MBM_nb_mle, Nhat_MBM_nb_mle_j)
   # }
-  
   
   # Summary
   True.p_m <- pB
@@ -264,14 +265,14 @@ mbm.1 <- function(sim.B = n.fix.B, simsize = nsim, pplsize = targetN, pB =scenar
   return(df)
 }
 # Changing p vector from both low to both high
-mbm.1.ls <- function(sim.B = n.fix.B, simsize = nsim, pplsize = targetN, pB = scenarios1$pB , p2 = scenarios1$p2){
+mbm.1.ls <- function( simsize = nsim, pplsize = targetN, pB = scenarios1$pB , p2 = scenarios1$p2){
   # Start changing scenarios across the vector of pre-specified p
   # Create list, each element is one sub-scenario of pB and p2
   s1.ls <- list()
   # Put in list (Dim = length(p.vex) with each element has dim = simsize * pplsize)
   if(length(pB) == length(p2)) {length.ls <- length(pB)}
   for(l in 1:length.ls){
-    s1.ls[[l]] <-  mbm.1(sim.B = n.fix.B, simsize = simsize, pplsize = pplsize, pB = pB[l], p2 = p2[l])
+    s1.ls[[l]] <-  mbm.1(simsize = simsize, pplsize = pplsize, pB = pB[l], p2 = p2[l])
   }
   # Collapse the list
   s1.comb <- do.call(rbind,s1.ls)
@@ -329,10 +330,10 @@ simu2.plot.CRM.MBM.diff.Est <- function(dt.crm = crm.1.Nhat, dt.mbm = mbm.1.Nhat
 
 simu2.plot.CRM.MBM.diff.p_m <- function(dt.crm = crm.1.Nhat, dt.mbm = mbm.1.Nhat, p1_pB = p1){
   CRM.p_m <- subset(dt.crm, p1 == p1_pB, select = c(p1, p2, Mean.p_m_crm, SD.p_m_crm, LB95.p_m_crm, UB95.p_m_crm))
-  CRM.p_m$Methods <- rep("CRM-Est p1", nrow(CRM.p_m))
+  CRM.p_m$Methods <- rep("CRM-Est(p1)", nrow(CRM.p_m))
   colnames(CRM.p_m) <- c("p1", "p2", "Mean.p_m","SD.p_m", "LB95.p_m", "UB95.p_m","Methods")
   MBM.p_m <- subset(dt.mbm, pB == p1_pB, select = c(pB, p2, Mean.p_m_mbm, SD.p_m_mbm, LB95.p_m_mbm, UB95.p_m_mbm))
-  MBM.p_m$Methods <- rep("MBM-Est pB", nrow(MBM.p_m))
+  MBM.p_m$Methods <- rep("MBM-Est(pB)", nrow(MBM.p_m))
   colnames(MBM.p_m) <- c("p1", "p2", "Mean.p_m", "SD.p_m", "LB95.p_m", "UB95.p_m", "Methods")
   
   CRM.MBM.p_m <- as.data.frame(rbind(CRM.p_m, MBM.p_m))
@@ -343,7 +344,7 @@ simu2.plot.CRM.MBM.diff.p_m <- function(dt.crm = crm.1.Nhat, dt.mbm = mbm.1.Nhat
     geom_point(aes(y = Mean.p_m)) +
     geom_hline(aes(yintercept=p1_pB), color = "black",
                linetype="dashed", size=0.5) +
-    ylab("p_m/p1") + 
+    ylab("Mean Plug-in Estimate of pB") + 
     xlab("Sampling Probability for second sample (p2)") +
     ggtitle(paste("CRM vs MBM -- Plot for", "Plug-in Est p1(pB) =", p1_pB, sep = " ")) +
     theme_classic() +
@@ -356,3 +357,41 @@ simu2.plot.CRM.MBM.diff.p_m <- function(dt.crm = crm.1.Nhat, dt.mbm = mbm.1.Nhat
   }
   
 
+#######################################################
+# Function to plot CRM vs MBM on relative p1/p2 ratio #
+#######################################################
+
+
+simu2.plot.CRM.MBM.p1.to.p2 <- function(dt.crm = crm.1.Nhat, dt.mbm = mbm.1.Nhat, p1_pB = p1){
+  CRM.LP <- subset(dt.crm, select = c(rel.p1.to.p2, Rel.Bias.Nhat_LP, LB95.Rel.Bias.Nhat_LP, UB95.Rel.Bias.Nhat_LP))
+  CRM.LP$Methods <- rep("CRM_LP", nrow(CRM.LP))
+  colnames(CRM.LP) <- c("Ratio.p1.p2", "Rel.Bias.Nhat", "LB95.Rel.Bias.Nhat", "UB95.Rel.Bias.Nhat","Methods")
+  CRM.Chap <- subset(dt.crm, select = c(rel.p1.to.p2, Rel.Bias.Nhat_Chap, LB95.Rel.Bias.Nhat_Chap, UB95.Rel.Bias.Nhat_Chap))
+  CRM.Chap$Methods <- rep("CRM_Chap", nrow(CRM.Chap))
+  colnames(CRM.Chap) <- c("Ratio.p1.p2", "Rel.Bias.Nhat", "LB95.Rel.Bias.Nhat", "UB95.Rel.Bias.Nhat","Methods")
+  MBM.nb.mvue <- subset(dt.mbm,  select = c(rel.pB.to.p2, Rel.Bias.Nhat_MBM_nb_mvue, LB95.Rel.Bias.Nhat_MBM_nb_mvue, UB95.Rel.Bias.Nhat_MBM_nb_mvue))
+  MBM.nb.mvue$Methods <- rep("MBM_nb_mvue", nrow(MBM.nb.mvue))
+  colnames(MBM.nb.mvue) <- c("Ratio.p1.p2", "Rel.Bias.Nhat", "LB95.Rel.Bias.Nhat", "UB95.Rel.Bias.Nhat","Methods")
+  MBM.nb.mle <- subset(dt.mbm, select = c(rel.pB.to.p2, Rel.Bias.Nhat_MBM_nb_mle, LB95.Rel.Bias.Nhat_MBM_nb_mle, UB95.Rel.Bias.Nhat_MBM_nb_mle))
+  MBM.nb.mle$Methods <- rep("MBM_nb_mle", nrow(MBM.nb.mle))
+  colnames(MBM.nb.mle) <- c("Ratio.p1.p2", "Rel.Bias.Nhat", "LB95.Rel.Bias.Nhat", "UB95.Rel.Bias.Nhat","Methods")
+  
+  CRM.MBM.given.p1 <- as.data.frame(rbind(CRM.LP, CRM.Chap, MBM.nb.mvue, MBM.nb.mle))
+  
+  p <- ggplot(CRM.MBM.given.p1, aes(x = Ratio.p1.p2, y = Rel.Bias.Nhat, group = Methods, color = Methods)) + 
+    # geom_ribbon(aes(ymin = LB95.Rel.Bias.Nhat, ymax = UB95.Rel.Bias.Nhat), linetype=2, alpha=0.1) +
+    # geom_line(aes(y = Rel.Bias.Nhat), size = 0.8) +
+    geom_point(aes(y = Rel.Bias.Nhat)) +
+    geom_hline(aes(yintercept=1), color = "black",
+               linetype="dashed", size=0.5) +
+    ylab("Nhat/N") + 
+    xlab("Ratio of p1 to p2") +
+    ggtitle("CRM vs MBM (N = 5000) -- Plot for ratio of p1 to p2") +
+    theme_classic() +
+    theme(plot.title = element_text(size = 16),
+          axis.text = element_text(size = 16),
+          axis.title = element_text(size = 16),
+          legend.text = element_text(size = 16),
+          legend.title = element_text(size = 16)) 
+  return(p)     
+}
