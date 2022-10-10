@@ -1,1 +1,3 @@
-# Thesis1-MBMvsCRM
+# On the estimation of population size – A comparison of capture-recapture and multiplier-benchmark methods
+
+This directory contains the code to produce the simulation work for the thesis project "On the estimation of population size – A comparison of capture-recapture and multiplier-benchmark methods". It contains code to run the simulations comparing the capture-recapture approach to the multiplier-benchmark approach in multiple scenarios, including both the assumptions met and violated situations. 
