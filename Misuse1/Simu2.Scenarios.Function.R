@@ -349,11 +349,11 @@ simu2.2.plot.MBM.diff.Est <- function(dt.combo = subdt[which(subdt$Methods == "M
     dt.combo$p1_sub <- as.character(dt.combo$p1_sub)
     
     if(linkage == "link"){
-      limit_vec <- c(0,4)
+      limit_vec <- c(0,3.5)
       break_vec <- c(0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5)
     }
     if(linkage == "unlink"){
-      limit_vec <- c(0,4)
+      limit_vec <- c(0,3.5)
       break_vec <- c(0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5)
     }
 

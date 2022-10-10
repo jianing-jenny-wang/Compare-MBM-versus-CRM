@@ -1,9 +1,5 @@
-# Simulation 4 - Take a benchmark(census) as a nominal sample
+# Simulation 3 - Take a benchmark(census) as a nominal sample
 library(dplyr)
-
-############################################################
-######## Scenario case 1 (Sample 2 is homogeneous) #########
-############################################################
 
 #########################################
 # Function to compute estimates for CRM #
@@ -39,13 +35,7 @@ n1 <- apply(sample1.dt,1,sum)
 n2 <- apply(sample2.dt,1,sum)
 # Overlapping individuals, equivalent to labeling the overlapping
 sample1.2.dt<-sample1.dt*sample2.dt
-# # Create contingency table
-# ppl.dt <- data.frame(covariate.vec,benchmark.vec, sample1.dt[i,], sample2.dt[i,])
-# colnames(ppl.dt) <- c("X","Benchmark","Sample1","Sample2")
-# ppl.dt$X <- ifelse(ppl.dt$X == 1, "A", "B")
-# cont.tb <- table(ppl.dt$Sample1,ppl.dt$Sample2,ppl.dt$X) # For given X, sample 1 (row) by sample 2 (col)
-# cont.tb.l <- as.data.frame(cont.tb)
-# colnames(cont.tb.l) <- c("Sample1","Sample2","X","Counts")
+
 ####################
 # --- Estimate --- #
 ####################

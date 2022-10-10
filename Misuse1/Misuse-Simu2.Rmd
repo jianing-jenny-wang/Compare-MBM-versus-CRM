@@ -15,17 +15,17 @@ library(ggplot2)
 library(dplyr)
 ```
 
+## Simulation Scenario 2 - Undercounting Benchmark Sample Cases
+
+### Simulation Set Up 
+
 Setup fixed factors:
 
 ```{r}
 nsim = 1000
-targetN = 5000
+targetN = 10000
 targetppl<- seq(1,targetN)
 ```
-
-## Simulation Scenario 2 - Undercounting Benchmark Sample Cases
-
-### Simulation Set Up 
 
 In this case, we assume both samples are random, but the members of the benchmark population are not completely included in the sample. We describe the impact of the dependence between the data sources in this case. We consider both negative and positive dependence; when there is positive dependence, it means that if a subject was included in the benchmark(sample 1), he is more likely to be included in sample 2 too.
 
@@ -64,10 +64,7 @@ Simu2.s2.Nhat <- s2.2.vary_p(simsize = nsim, pplsize = targetN,
 
 ### Plot MBM (MLE on linked and unlinked)
 
-We combine multiple undercounting levels and put varying dependence level together on x-axis; the plots are grouped by the undercounting levels. we look at the relative bias ($\frac{\hat{N}}{N}$) on y. We pick two cases to show: 
-
-1) two samples both have relative low coverage;
-2) two samples both have relative high coverage.
+We combine multiple undercounting levels and put varying dependence level together on x-axis; the plots are grouped by the undercounting levels. we look at the relative bias ($\frac{\hat{N}}{N}$) on y-axis.
 
 ```{r}
 # Load functions
@@ -75,16 +72,16 @@ source("Simu2.Scenarios.Function.R")
 
 subdt <- simu2.2.Dt.MBM.diff.Est(dt.combo = Simu2.s2.Nhat, p2.i = p2.vec, p1_pB.i = pB.vec, p1_sub = p1_sub.vec, dep.factor = dep.factor.vec)
 
-if(pB.vec == perm_vec[1,1]){
+if(pB.vec == perm_vec[1,1] & p2.vec == perm_vec[1,2]){
   Title <- "(A)"
 }
-if(pB.vec == perm_vec[2,1]){
+if(pB.vec == perm_vec[2,1] & p2.vec ==  perm_vec[2,2]){
   Title <- "(B)"
 }
-if(pB.vec == perm_vec[3,1]){
+if(pB.vec == perm_vec[3,1] & p2.vec ==  perm_vec[3,2]){
   Title <- "(C)"
 }
-if(pB.vec == perm_vec[4,1]){
+if(pB.vec == perm_vec[4,1] & p2.vec ==  perm_vec[4,2]){
   Title <- "(D)"
 }
 # Linked MBM estimates

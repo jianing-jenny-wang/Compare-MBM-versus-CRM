@@ -31,6 +31,7 @@ targetppl<- seq(1,targetN)
 ```
 
 ```{r}
+
 # Basic setup for the sampling probabilities
 p.X1.vec <- 0.3
 pB.X0.vec <- 0 
@@ -45,16 +46,19 @@ source("Simu3.Scenarios.Function.R")
 
 # Run simulation, and compute summary statistics for CRM process
 Simu3.crm.1.2.Nhat <- crm.1.2.ls(simsize = nsim, pplsize = targetN, p.X1 = scenarios2$p.X1, pB.X0 = scenarios2$pB.X0, pB.X1 = scenarios2$pB.X1, p2.X0 = scenarios2$p2.X0, p2.X1 = scenarios2$p2.X1)
+
 ```
 
 ### Plot MBM (MLE on linked and unlinked)
 
 ```{r}
+
 source("Simu3.Scenarios.Function.R")
 simu3.plot.CRM.MBM.diff.Est(dt.crm = Simu3.crm.1.2.Nhat, dt.mbm = NA, p1_pB = pB.X1.vec[1], p.X1 = 0.3, title = "(A)")
 simu3.plot.CRM.MBM.diff.Est(dt.crm = Simu3.crm.1.2.Nhat, dt.mbm = NA, p1_pB = pB.X1.vec[2], p.X1 = 0.3, title = "(B)")
 simu3.plot.CRM.MBM.diff.Est(dt.crm = Simu3.crm.1.2.Nhat, dt.mbm = NA, p1_pB = pB.X1.vec[3], p.X1 = 0.3, title = "(C)")
 simu3.plot.CRM.MBM.diff.Est(dt.crm = Simu3.crm.1.2.Nhat, dt.mbm = NA, p1_pB = pB.X1.vec[4], p.X1 = 0.3, title = "(D)")
+
 ```
 
 
