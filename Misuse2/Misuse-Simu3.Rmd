@@ -15,7 +15,6 @@ library(ggplot2)
 library(dplyr)
 ```
 
-
 ## Simulation Scenario 3 
 
 ### Simulation Set Up 

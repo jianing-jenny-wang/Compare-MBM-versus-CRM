@@ -1,10 +1,13 @@
-# Simulation 3 - Take a benchmark(census) as a nominal sample
+#############################################
+# Function to compute estimates for CRM/MBM #
+#############################################
+
+# Utility Functions
 library(dplyr)
 
-#########################################
-# Function to compute estimates for CRM #
-#########################################
-
+#############################################################
+######### Scenario 2: Structural Zero Samples ##############
+#############################################################
 crm.1 <- function(simsize = nsim, pplsize = targetN, p.X1 = scenarios1$p.X1[1], pB.X0 = scenarios1$pB.X0[1], pB.X1 = scenarios1$pB.X1[1], p2 = scenarios1$p2[1]){
 # Create datasets
 benchmark.dt <- matrix(0, nrow = simsize, ncol = pplsize)
@@ -565,5 +568,3 @@ simu3.plot.CRM.MBM.diff.Est <- function(dt.crm = simu3.crm.1.Nhat, dt.mbm = NA, 
   }
   return(p)   
 }
-
-
