@@ -1,0 +1,60 @@
+---
+title: "Thesis1-UseBenchmark_as_RandomSample"
+author: "Jianing Wang"
+date: "12/5/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+## Global setting for the entire Markdown
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, error = FALSE)
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+
+## Simulation Scenario 3 
+
+### Simulation Set Up 
+
+In this case, we consider a sample from the target population but the collection process structurally miss some target subjects based on their characteristics.
+
+Setup fixed factors:
+
+```{r}
+nsim = 1000
+targetN = 10000
+targetppl<- seq(1,targetN)
+```
+
+```{r}
+# Basic setup for the sampling probabilities
+p.X1.vec <- 0.3
+pB.X0.vec <- 0 
+pB.X1.vec <- c(0.05, 0.1, 0.3, 0.6)
+p2.X0.vec <- 0.2
+p2.X1.vec <- c(0.05, 0.1, 0.3, 0.6) 
+scenarios2 <- expand.grid(p2.X0 = p2.X0.vec, p2.X1 = p2.X1.vec, pB.X1 = pB.X1.vec, pB.X0 = pB.X0.vec, p.X1 = p.X1.vec)
+scenarios2 <- scenarios2[, c("p.X1","pB.X1","pB.X0","p2.X1","p2.X0")]
+
+# Function to simulate CRM process
+source("Simu3.Scenarios.Function.R")
+
+# Run simulation, and compute summary statistics for CRM process
+Simu3.crm.1.2.Nhat <- crm.1.2.ls(simsize = nsim, pplsize = targetN, p.X1 = scenarios2$p.X1, pB.X0 = scenarios2$pB.X0, pB.X1 = scenarios2$pB.X1, p2.X0 = scenarios2$p2.X0, p2.X1 = scenarios2$p2.X1)
+```
+
+### Plot MBM (MLE on linked and unlinked)
+
+```{r}
+source("Simu3.Scenarios.Function.R")
+simu3.plot.CRM.MBM.diff.Est(dt.crm = Simu3.crm.1.2.Nhat, dt.mbm = NA, p1_pB = pB.X1.vec[1], p.X1 = 0.3, title = "(A)")
+simu3.plot.CRM.MBM.diff.Est(dt.crm = Simu3.crm.1.2.Nhat, dt.mbm = NA, p1_pB = pB.X1.vec[2], p.X1 = 0.3, title = "(B)")
+simu3.plot.CRM.MBM.diff.Est(dt.crm = Simu3.crm.1.2.Nhat, dt.mbm = NA, p1_pB = pB.X1.vec[3], p.X1 = 0.3, title = "(C)")
+simu3.plot.CRM.MBM.diff.Est(dt.crm = Simu3.crm.1.2.Nhat, dt.mbm = NA, p1_pB = pB.X1.vec[4], p.X1 = 0.3, title = "(D)")
+```
+
+
