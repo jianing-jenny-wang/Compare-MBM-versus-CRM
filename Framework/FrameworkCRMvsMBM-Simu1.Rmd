@@ -35,9 +35,7 @@ I proposed a framework for MBM and CRM to illustrate the underlying sampling mec
 2. $p_{1}$: Underlying probability of sampling into sample 1
 3. $p_{2}$: Underlying probability of sampling into sample 2
 
-## Scenarios
-
-### Scenario 1.1: Label people with Benchmark, then fixed; only varying p2 for MBM, whereas CRM has two random samples
+## Steps of the Simulation
 
 To mimic the proposed MBM sampling process:
 
@@ -83,6 +81,9 @@ source("Simu1.Scenarios.Functions.R")
 simu2.mbm.1.Nhat <- mbm.1.ls(simsize = nsim, pplsize = targetN, pB = scenarios1$pB, p2 = scenarios1$p2)
 ```
 
+
+## Plots of the Estimates and Empirical Variances
+
 Plots for each value of $p_{1}$ ($p_{B}$), compare the relative bias with 95\% confidencen interval areas between the framework of CRM and MBM.
 
 ```{r}
@@ -95,7 +96,7 @@ simu2.plot.CRM.MBM.diff.Est(dt.crm = simu2.crm.1.Nhat, dt.mbm = simu2.mbm.1.Nhat
 simu2.plot.CRM.MBM.diff.Est(dt.crm = simu2.crm.1.Nhat, dt.mbm = simu2.mbm.1.Nhat, p1_pB = p1.vec[4], title = "(D)")
 ```
 
-### Understand the source of bias of estimators
+### Understand the Source of Bias of Estimators
 
 To understand why neither MLE nor MVUE could work for MBM, we investigate if the estimate of $p_{2}$ using $\hat{p}_{1}$ is biased, because essentially this is a two-stage estimation, the first is using $\hat{p}_{1}$ to estimate $p_{2}$, and then plug this estimate into a model for $N$ estimation. If the estimate of $p_{2}$ is biased, even we choose a good estimator for $N$, the result keeps biased due to a bias when estimating $p_{2}$.
 
