@@ -1,0 +1,98 @@
+---
+title: "Thesis1-IncompleteSample_as_Benchmark"
+author: "Jianing Wang"
+date: "11/21/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+## Golbal setting for the entire Markdown
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, error = FALSE)
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+Setup fixed factors:
+
+```{r}
+nsim = 1000
+targetN = 5000
+targetppl<- seq(1,targetN)
+```
+
+## Simulation Scenario 2 - Undercounting Benchmark Sample Cases
+
+### Simulation Set Up 
+
+In this case, we assume both samples are random, but the members of the benchmark population are not completely included in the sample. We describe the impact of the dependence between the data sources in this case. We consider both negative and positive dependence; when there is positive dependence, it means that if a subject was included in the benchmark(sample 1), he is more likely to be included in sample 2 too.
+
+Varying parameter of dependence level: 
+
+dep.factor = (0.6, 0.8, 1, 1.2, 1.4, 1.6). Here dep.factor = 1 means no dependence.
+
+Such dependence is not associated with the incompleteness of the benchmark, that is, even though some people were missed by the benchmark, they should still be more likely included into the sample 2 as long as they have the benchmark attribute.
+
+```{r}
+# True Benchmark prevalence
+pB <- c(0.05, 0.1, 0.3, 0.6)
+p2 <- c(0.05, 0.1, 0.3, 0.6)
+perm_vec <- data.frame(pB = c(0.05,0.1,0.6,0.6),
+                       p2 = c(0.1,0.6,0.6,0.1))
+pB.vec <-  perm_vec[1,1] # We vary this value to look at results for each of the sampling probability cases
+# Deflation factor to reflect incomplete sample of the benchmark
+p1_sub.vec <- c(0.7, 0.8, 0.9, 0.95)
+# Random sample 2 
+p2.vec <-  perm_vec[1,2] # We vary this value to look at results for each of the sampling probability cases
+# Dependence factor (a multiplier to p2.vec conditional on being included in the benchmark already)
+dep.factor.vec <- c(0.6, 0.8, 1.0, 1.2, 1.4, 1.6)
+# Combine permutation of scenarios
+scenarios2 <- expand.grid(p1_sub_vec = p1_sub.vec, p2_vec = p2.vec, pB_vec = pB.vec, dep.factor_vec = dep.factor.vec)
+scenarios2 <- scenarios2[, c("pB_vec","p2_vec","p1_sub_vec","dep.factor_vec")]
+
+# Load functions
+source("Simu2.Scenarios.Function.R")
+
+# Run simulation, get summary statistics
+Simu2.s2.Nhat <- s2.2.vary_p(simsize = nsim, pplsize = targetN, 
+                     pB = scenarios2$pB_vec,  p1_sub = scenarios2$p1_sub_vec, p2 = scenarios2$p2_vec,
+                     dep.factor = scenarios2$dep.factor_vec)
+```
+
+
+### Plot MBM (MLE on linked and unlinked)
+
+We combine multiple undercounting levels and put varying dependence level together on x-axis; the plots are grouped by the undercounting levels. we look at the relative bias ($\frac{\hat{N}}{N}$) on y. We pick two cases to show: 
+
+1) two samples both have relative low coverage;
+2) two samples both have relative high coverage.
+
+```{r}
+# Load functions
+source("Simu2.Scenarios.Function.R")
+
+subdt <- simu2.2.Dt.MBM.diff.Est(dt.combo = Simu2.s2.Nhat, p2.i = p2.vec, p1_pB.i = pB.vec, p1_sub = p1_sub.vec, dep.factor = dep.factor.vec)
+
+if(pB.vec == perm_vec[1,1]){
+  Title <- "(A)"
+}
+if(pB.vec == perm_vec[2,1]){
+  Title <- "(B)"
+}
+if(pB.vec == perm_vec[3,1]){
+  Title <- "(C)"
+}
+if(pB.vec == perm_vec[4,1]){
+  Title <- "(D)"
+}
+# Linked MBM estimates
+simu2.2.plot.MBM.diff.Est(dt.combo = subdt[which(subdt$Methods == "MBM_link_MLE"),], p2.i = p2.vec, p1_pB.i = pB.vec, p1_sub = p1_sub.vec, dep.factor = dep.factor.vec, title = Title, linkage = "link")
+
+# Unlinked MBM estimates
+simu2.2.plot.MBM.diff.Est(dt.combo = subdt[which(subdt$Methods == "MBM_unlk_MLE"),], p2.i = p2.vec, p1_pB.i = pB.vec, p1_sub = p1_sub.vec, dep.factor = dep.factor.vec, title = Title, linkage = "unlink")
+
+```
+
+
