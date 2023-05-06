@@ -20,7 +20,7 @@ This markdown file contains the codes exploring the multiplier-benchmark method 
 
 ### Simu2.Scenario.Function.R
 
-This program contains corresponding functions computing the estimates of the total size $N$, the relative bias and variances based on different estimators in the two methods, as well as the visualization codes for the comparison.
+This program contains corresponding functions computing the estimates of the total target population size $N$, the relative bias and variances based on different estimators in the two methods, as well as the visualization codes for the comparison.
 
 ## Misuse 2
 
